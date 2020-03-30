@@ -8,7 +8,7 @@ import * as Testing from "../TestingRates";
 
 export class JHDatasourceProvider extends DatasourceProvider {
 
-    BLACKLIST_NAMES = ["Recovered, Canada", "MS Zaandam", "", "China", "Australia", "Recovered, US"];
+    BLACKLIST_NAMES = ["Recovered, Canada", "MS Zaandam", "", "Recovered, US"];
 
     constructor() {
         super("Johns Hopkins CSSE COVID-19");
@@ -36,10 +36,9 @@ export class JHDatasourceProvider extends DatasourceProvider {
                                 ds.datasets.push(new Dataset(new Date().toLocaleDateString().replace("2020", "20")));
                                 if(loadUScounties) {
                                     this.parseLive(ds, rawLive.data);
-                                } else {
-                                    this.parseLiveCountries(ds, rawCountries.data);
-                                    this.parseLiveUSStates(ds, rawUSStates.data);
                                 }
+                                this.parseLiveCountries(ds, rawCountries.data);
+                                this.parseLiveUSStates(ds, rawUSStates.data);
                                 this.fillEmpty(ds);
                                 // infer data
                                 this.computeActive(ds);
@@ -148,33 +147,39 @@ export class JHDatasourceProvider extends DatasourceProvider {
             data.absolute.current.recovered= Number(row[6]);
             data.absolute.current.deceased = Number(row[5]);
 
-            data.absolute.growthLast1Day.confirmed = data.absolute.current.confirmed - ds.datasets[ds.datasets.length - 2].data[name].absolute.current.confirmed;
-            data.absolute.growthLast1Day.recovered = data.absolute.current.recovered - ds.datasets[ds.datasets.length - 2].data[name].absolute.current.recovered;
-            data.absolute.growthLast1Day.deceased = data.absolute.current.deceased - ds.datasets[ds.datasets.length - 2].data[name].absolute.current.deceased;
-
-            data.absolute.growthLast3Days.confirmed = data.absolute.current.confirmed - ds.datasets[ds.datasets.length - 4].data[name].absolute.current.confirmed;
-            data.absolute.growthLast3Days.recovered = data.absolute.current.recovered - ds.datasets[ds.datasets.length - 4].data[name].absolute.current.recovered;
-            data.absolute.growthLast3Days.deceased = data.absolute.current.deceased - ds.datasets[ds.datasets.length - 4].data[name].absolute.current.deceased;
-
-            data.absolute.growthLast7Days.confirmed = data.absolute.current.confirmed - ds.datasets[ds.datasets.length - 8].data[name].absolute.current.confirmed;
-            data.absolute.growthLast7Days.recovered = data.absolute.current.recovered - ds.datasets[ds.datasets.length - 8].data[name].absolute.current.recovered;
-            data.absolute.growthLast7Days.deceased = data.absolute.current.deceased - ds.datasets[ds.datasets.length - 8].data[name].absolute.current.deceased;
-
             data.ppm.current.confirmed = this.ppm(name, data.absolute.current.confirmed);
             data.ppm.current.recovered = this.ppm(name, data.absolute.current.recovered);
             data.ppm.current.deceased = this.ppm(name, data.absolute.current.deceased);
 
-            data.ppm.growthLast1Day.confirmed = this.ppm(name, data.absolute.growthLast1Day.confirmed);
-            data.ppm.growthLast1Day.recovered = this.ppm(name, data.absolute.growthLast1Day.recovered);
-            data.ppm.growthLast1Day.deceased = this.ppm(name, data.absolute.growthLast1Day.deceased);
+            if(ds.datasets[ds.datasets.length - 2].data[name]) {
+                data.absolute.growthLast1Day.confirmed = data.absolute.current.confirmed - ds.datasets[ds.datasets.length - 2].data[name].absolute.current.confirmed;
+                data.absolute.growthLast1Day.recovered = data.absolute.current.recovered - ds.datasets[ds.datasets.length - 2].data[name].absolute.current.recovered;
+                data.absolute.growthLast1Day.deceased = data.absolute.current.deceased - ds.datasets[ds.datasets.length - 2].data[name].absolute.current.deceased;
 
-            data.ppm.growthLast3Days.confirmed = this.ppm(name, data.absolute.growthLast3Days.confirmed);
-            data.ppm.growthLast3Days.recovered = this.ppm(name, data.absolute.growthLast3Days.recovered);
-            data.ppm.growthLast3Days.deceased = this.ppm(name, data.absolute.growthLast3Days.deceased);
+                data.ppm.growthLast1Day.confirmed = this.ppm(name, data.absolute.growthLast1Day.confirmed);
+                data.ppm.growthLast1Day.recovered = this.ppm(name, data.absolute.growthLast1Day.recovered);
+                data.ppm.growthLast1Day.deceased = this.ppm(name, data.absolute.growthLast1Day.deceased);
+            }
 
-            data.ppm.growthLast7Days.confirmed = this.ppm(name, data.absolute.growthLast7Days.confirmed);
-            data.ppm.growthLast7Days.recovered = this.ppm(name, data.absolute.growthLast7Days.recovered);
-            data.ppm.growthLast7Days.deceased = this.ppm(name, data.absolute.growthLast7Days.deceased);
+            if(ds.datasets[ds.datasets.length - 4].data[name]) {
+                data.absolute.growthLast3Days.confirmed = data.absolute.current.confirmed - ds.datasets[ds.datasets.length - 4].data[name].absolute.current.confirmed;
+                data.absolute.growthLast3Days.recovered = data.absolute.current.recovered - ds.datasets[ds.datasets.length - 4].data[name].absolute.current.recovered;
+                data.absolute.growthLast3Days.deceased = data.absolute.current.deceased - ds.datasets[ds.datasets.length - 4].data[name].absolute.current.deceased;
+
+                data.ppm.growthLast3Days.confirmed = this.ppm(name, data.absolute.growthLast3Days.confirmed);
+                data.ppm.growthLast3Days.recovered = this.ppm(name, data.absolute.growthLast3Days.recovered);
+                data.ppm.growthLast3Days.deceased = this.ppm(name, data.absolute.growthLast3Days.deceased);
+            }
+
+            if(ds.datasets[ds.datasets.length - 8].data[name]) {
+                data.absolute.growthLast7Days.confirmed = data.absolute.current.confirmed - ds.datasets[ds.datasets.length - 8].data[name].absolute.current.confirmed;
+                data.absolute.growthLast7Days.recovered = data.absolute.current.recovered - ds.datasets[ds.datasets.length - 8].data[name].absolute.current.recovered;
+                data.absolute.growthLast7Days.deceased = data.absolute.current.deceased - ds.datasets[ds.datasets.length - 8].data[name].absolute.current.deceased;
+
+                data.ppm.growthLast7Days.confirmed = this.ppm(name, data.absolute.growthLast7Days.confirmed);
+                data.ppm.growthLast7Days.recovered = this.ppm(name, data.absolute.growthLast7Days.recovered);
+                data.ppm.growthLast7Days.deceased = this.ppm(name, data.absolute.growthLast7Days.deceased);
+            }
 
             dataset[name] = data;
         }
@@ -266,7 +271,11 @@ export class JHDatasourceProvider extends DatasourceProvider {
                 let locationData = dataset.data[name];
 
                 // sums
-                if(!name.endsWith(", US")) {
+                if(
+                    !name.endsWith(", US") &&
+                    name!=="China" &&
+                    name!=="Australia"
+                ) {
                     dataset.totalConfirmed += locationData.absolute.current.confirmed;
                     dataset.totalRecovered += locationData.absolute.current.recovered;
                     dataset.totalDeceased += locationData.absolute.current.deceased;
@@ -410,7 +419,13 @@ export class JHDatasourceProvider extends DatasourceProvider {
     };
 
     parseRow = (ds, attribute, row) => {
-        let name = (row[0] ? row[0] + ", " + row[1] : row[1]) ? row[1] : "";
+        let name = "";
+            if(row[0]) {
+                name += row[0] + ", ";
+            }
+            if(row[1]) {
+                name += row[1];
+            }
         if(this.BLACKLIST_NAMES.includes(name)) {
             return;
         }
@@ -475,28 +490,3 @@ export class JHDatasourceProvider extends DatasourceProvider {
         });
     };
 }
-
-
-
-  // get_sums(NAME, extension) {
-	//   let that = this;
-	// 		  let population_sum = 0;
-	// 		  let confirmed_sum = 0;
-	// 		  let projected_sum = 0;
-	// 		  let active_sum = 0;
-	// 		  let recovered_sum = 0;
-	// 		  let deaths_sum = 0;
-	// 	          for(let c of that.confirmed) {
-  //                   if (c.name.endsWith(extension)) {
-  //                     if (!isNaN(Population.ABSOLUTE[c.name])) {
-  //                       population_sum += Population.ABSOLUTE[c.name];
-  //                       confirmed_sum += that.confirmed[c.rowId].val;
-  //                       projected_sum += that.projected[c.rowId].val;
-  //                       active_sum += that.confirmed[c.rowId].val - that.recoveredAbsByRowId[c.rowId] - that.deathsAbsByRowId[c.rowId];
-  //                       recovered_sum += that.recovered[c.rowId].val;
-  //                       deaths_sum += that.deaths[c.rowId].val;
-  //                     }
-  //                   }
-  //                 }
-	//   return [population_sum, confirmed_sum, projected_sum, active_sum, recovered_sum, deaths_sum];
-  // }
