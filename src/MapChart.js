@@ -7,39 +7,25 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faWindowMinimize,
   faUsers,
   faProcedures,
   faHeartbeat,
   faHeartBroken,
-  faBiohazard,
-  faStopCircle,
-  faPauseCircle,
-  faQuestion,
-  faQuestionCircle, 
-  faBug, 
-  faBalanceScale, 
   faVial,
-  faStepBackward,
-  faStepForward,
-  faShieldAlt,
-  faExclamationTriangle
+  faExclamationTriangle,
+  faThermometerThreeQuarters
 } from '@fortawesome/free-solid-svg-icons';
 
-import {faPlayCircle} from '@fortawesome/free-regular-svg-icons';
-
-import Form from 'react-bootstrap/Form';
 import Badge from 'react-bootstrap/Badge';
-import ReactBootstrapSlider from "react-bootstrap-slider";
+import Container from "react-bootstrap/Container";
 
 import BarChart from "./BarChart";
-import {JHDatasourceProvider} from "./datasource/JHDatasourceProvider";
+import { JHDatasourceProvider } from "./datasource/JHDatasourceProvider";
 import * as Population from "./Population";
 import * as Testing from "./TestingRates";
 import Utils from "./Utils";
 
 import { withStyles } from '@material-ui/core/styles';
-import RaceChart from "./RaceChart";
 
 const LightTooltip = withStyles(theme => ({
   tooltip: {
@@ -57,6 +43,7 @@ class MapChart extends Map {
     super(props);
 
     this.state = {
+      setActiveConfirmed: props.setActiveConfirmed,
       setTotalConfirmed: props.setTotalConfirmed,
       setTotalRecovered: props.setTotalRecovered,
       setTotalDeceased: props.setTotalDeceased,
@@ -65,7 +52,6 @@ class MapChart extends Map {
       logmode: true,
       momentum: "none",
       ppmmode: false,
-      minimized: false,
       testmode: true,
       testscale: 0,
       dayOffset: 0,
@@ -79,9 +65,9 @@ class MapChart extends Map {
 
       lat: 0,
       lng: 0,
-      zoom: 2
+      zoom: 2,
 
-      //chart: "pie",
+      // chart: "pie",
       //width: 2,
     };
 
@@ -137,493 +123,36 @@ class MapChart extends Map {
     else {
       let that = this;
       let ds = this.state.datasource.datasets[Math.max(0, this.state.datasource.datasets.length - 1 + this.state.dayOffset)];
+      that.state.setActiveConfirmed(ds.totalActive);
       that.state.setTotalConfirmed(ds.totalConfirmed);
       that.state.setTotalRecovered(ds.totalRecovered);
       that.state.setTotalDeceased(ds.totalDeceased);
       that.state.setTotalConfirmedProjected(ds.totalConfirmedProjected * that.state.testscale);
       return (
           <>
-            <div className={"small controls" + (that.state.minimized ? " minimized" : "")}>
-              {/*
-                 <Form.Check inline className="small hideInJh" checked={that.state.momentum==="none" } label="Live situation" type={"radio"} name={"a"} id={`inline-radio-4`} onClick={() => {that.setState({momentum: "none"});}} />
-                 <Form.Check inline className="small hideInJh" checked={that.state.momentum==="last1" } label="Momentum last 1 day" type={"radio"} name={"b"} id={`inline-radio-5`} onClick={() => {that.setState({momentum: "last1", chart: "pie"});}} />
-                 <Form.Check inline className="small hideInJh" checked={that.state.momentum==="last3" } label="Momentum last 3 days" type={"radio"} name={"b"} id={`inline-radio-6`} onClick={() => {that.setState({momentum: "last3", chart: "pie"});}} />
-                 <Form.Check inline className="small hideInJh" checked={that.state.momentum==="last7" } label="Momentum last 7 days" type={"radio"} name={"b"} id={`inline-radio-7`} onClick={() => {that.setState({momentum: "last7", chart: "pie"});}} />
-              */}
-              <button hidden={that.state.minimized} className={"btn-collapse"} onClick={() => {
-                that.setState({minimized: true})
-              }}>minimize <FontAwesomeIcon icon={faWindowMinimize}/></button>
-              <button hidden={!that.state.minimized} className={"btn-collapse"} onClick={() => {
-                that.setState({minimized: false})
-              }}>open
-              </button>
-              <div hidden={that.state.minimized}>
-                <span className="small text-muted mr-2">Mode:</span>
-                <Tooltip
-                    title={<span><b>Live mode:</b> Glyphs show latest confirmed, recovered and deceased numbers.<br/><br/><b>Momentum mode:</b> Glyphs show growth (red) and shrinking (green) of active cases since last 1, 3 or 7 day(s).</span>}
-                    small={"true"}
-                    arrow
-                    disableTouchListener={true}
-                >
-                  <span className="test"><FontAwesomeIcon icon={faQuestion} size={"xs"}/></span>
-                </Tooltip>
-                <Form.Control value={that.state.momentum}
-                              style={{lineHeight: "12px", padding: "0px", fontSize: "12px", height: "24px"}} size="sm"
-                              as="select" onChange={(e) => {
-                  that.setState({momentum: e.nativeEvent.target.value, chart: "pie", testmode: false, testscale: 0});
-                }}>
-                  <option value="none">Live</option>
-                  <option value="last1">Momentum (last 24 hours)</option>
-                  <option value="last3">Momentum (last 3 days)</option>
-                  <option value="last7">Momentum (last 7 days)</option>
-                </Form.Control>
-                <Form.Check
-                  inline
-                  className="small"
-                  checked={this.state.showUScounties}
-                  label={
-                    <Tooltip
-                      title="Show live US county data (slows perfomance of the application)."
-                      small={"true"}
-                      arrow
-                      disableTouchListener={true}
-                    >
-                      <span>Incl. US counties (slows speed)</span>
-                    </Tooltip>
-                  }
-                  type={"checkbox"}
-                  name={"a"}
-                  id={`uscounties-checkbox`}
-                  onChange={() => {
-                    new JHDatasourceProvider().getDatasource(!that.state.showUScounties,  (datasource) => {
-                      that.setState({
-                          showUScounties: !that.state.showUScounties,
-                          datasource: datasource
-                      });
-                    });
-                  }}
-                /><br />
-                <span className="small text-muted mr-2">Normalization:</span>
-                <Tooltip
-                    title="Scale the size of the glyphs on the map according to different criteria."
-                    small={"true"}
-                    arrow
-                    disableTouchListener={true}
-                >
-                  <span className="test"><FontAwesomeIcon icon={faQuestion} size={"xs"}/></span>
-                </Tooltip>
-                <br/>
-                <Form.Check
-                    inline
-                    className="small"
-                    checked={that.state.logmode}
-                    label={
-                      <Tooltip
-                          title="Scales the size of the glyphs on the map logarithmically."
-                          small={"true"}
-                          arrow
-                          disableTouchListener={true}
-                      >
-                        <span>Log</span>
-                      </Tooltip>
-                    }
-                    type={"checkbox"}
-                    name={"a"}
-                    id={`inline-checkbox-2`}
-                    onChange={() => {
-                      that.setState({
-                        logmode: !that.state.logmode
-                      });
-                    }}
-                />
-                <Form.Check
-                    inline
-                    className="small"
-                    checked={that.state.ppmmode}
-                    label={
-                      <Tooltip
-                          title="Scales the size of the glyphs on the map according to the number of people in the location."
-                          small={"true"}
-                          arrow
-                          disableTouchListener={true}
-                      >
-                        <span>Population</span>
-                      </Tooltip>
-                    }
-                    type={"checkbox"}
-                    name={"a"}
-                    id={`inline-checkbox-3`}
-                    onChange={() => {
-                      that.setState({
-                        ppmmode: !that.state.ppmmode
-                      });
-                    }}
-                /><br/>
-                {
-                  that.state.momentum === "none" && !that.state.playmode &&
-                  [
-                    <span className="small text-muted mr-2">Project testing rates:</span>,
-                    <Tooltip
-                        title="Display how many confirmed cases there might be if local testing rate was coinciding with global average."
-                        small={"true"}
-                        arrow
-                        disableTouchListener={true}
-                    >
-                      <span className={"test"}><FontAwesomeIcon icon={faQuestion} size={"xs"}/></span>
-                    </Tooltip>,
-                    <br/>,
-                    <ReactBootstrapSlider
-                      ticks={[0, 1, 2, 3]}
-                      ticks_labels={["off", "global avg.", "x2", "x3"]}
-                      value={this.state.testscale}
-                      change={e => {
-                        this.state.testscale = e.target.value;
-                        this.state.testmode = true;
-                        this.render();
-                      }}
-                      step={0.1}
-                      max={3}
-                      min={0}
-                    ></ReactBootstrapSlider>,
-                    <br/>
-                  ]
-                }
-                <span className="small text-muted mr-2">Glyph size:</span><br/>
-                <ReactBootstrapSlider value={this.state.factor} change={e => {
-                  this.setState({factor: e.target.value, width: e.target.value / 10});
-                }} step={1} max={100} min={1}></ReactBootstrapSlider><br/>
-                {/*<Form.Check inline title="Represent data as bubbles. Hover bubbles on map to see more details." className="small" checked={that.state.chart==="pie" } label="Bubbles" type={"radio"} name={"a"} id={`inline-radio-1`} onChange={() => {that.setState({chart: "pie"});}}/><br />*/}
-                {/*<Form.Check inline title="Represent data as vertical bars. Hover bars on map to see more details." className="small hideInMomentum" checked={that.state.chart==="bar" } label="Bars" type={"radio"} name={"a"} id={`inline-radio-2`} onChange={() => {that.setState({chart: "bar"});}} disabled={that.state.momentum!=="none" ? true : false}/>*/}
-                {/*<Form.Check inline title="Represent data as horizontal pill. Hover pill on map to see more details." className="small hideInMomentum" checked={that.state.chart==="pill" } label="Pills" type={"radio"} name={"a"} id={`inline-radio-3`} onChange={() => {that.setState({chart: "pill"});}} disabled={that.state.momentum!=="none" ? true : false}/><br />*/}
-                <span className="small text-muted">Map style:</span><br/>
-                <Form.Control value={that.state.mapstyle}
-                              style={{lineHeight: "12px", padding: "0px", fontSize: "12px", height: "24px"}} size="sm"
-                              as="select" onChange={(e) => {
-                  that.setState({mapstyle: e.nativeEvent.target.value});
-                }}>
-                  <option value="https://{s}.tile.osm.org/{z}/{x}/{y}.png">Color</option>
-                  <option value="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png">Light
-                  </option>
-                  <option value="https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png">Dark
-                  </option>
-                </Form.Control>
-
-                <div className={"credits"}>
-                  <Badge><a target="_blank" className="text-secondary" rel="noopener noreferrer"
-                            href={"https://github.com/daniel-karl/covid19-map/issues"}><FontAwesomeIcon
-                      icon={faBug}/> Issues</a></Badge>
-                  <Badge><a target="_blank" className="text-secondary" rel="noopener noreferrer"
-                            href={"https://github.com/daniel-karl/covid19-map#about"}><FontAwesomeIcon
-                      icon={faQuestionCircle}/> About</a></Badge>
-                  <Badge><a target="_blank" className="text-secondary" rel="noopener noreferrer"
-                            href={"https://github.com/daniel-karl/covid19-map/blob/master/LICENSE.txt"}><FontAwesomeIcon
-                      icon={faBalanceScale}/> License</a></Badge>
-                </div>
-              </div>
-            </div>
-            <div className="small timeline">
-              <button disabled style={{opacity: 1, pointerEvents: "none"}} className={"btn btn-sm text-dark"}>
-                <b>{ds.date}</b>
-              </button>
-              <div className={"race mb-1"}>
-                <RaceChart
-                  datasource={this.state.datasource}
-                  dayOffset={this.state.dayOffset}
-                  logmode={this.state.logmode}
-                  names={this.state.selectedLocations}
-                />
-              </div>
-              <button
-                  className={this.state.dayOffset < 0 ? "btn btn-sm btn-dark leftTime" : "btn btn-sm btn-outline-dark leftTime"}
-                  style={{height: "30px", lineHeight: "20px"}}
-                  onClick={() => {
-                      this.setState({
-                         dayOffset: this.state.dayOffset - 1,
-                         testmode: false
-                      });
-                  }}
-              ><FontAwesomeIcon icon={faStepBackward}/></button>
-
-              <button
-                  className={"btn btn-sm btn-secondary midTime"}
-                  style={this.state.dayOffset < 0 && !this.state.playmode ? {
-                    height: "30px",
-                    lineHeight: "20px"
-                  } : {display: "none"}}
-                  onClick={() => {
-                    this.state.dayOffset = Math.min(0, this.state.dayOffset + 1);
-                    if (this.state.dayOffset === 0) {
-                      this.state.playmode = false;
-                    } else {
-                      this.state.testmode = false;
-                    }
-                    this.render();
-                  }}
-              ><FontAwesomeIcon icon={faStepForward}/></button>
-
-              <button
-                  className={this.state.dayOffset < 0 ? "btn btn-sm btn-outline-danger todayTime" : "btn btn-sm btn-danger todayTime"}
-                  style={{height: "30px", lineHeight: "20px"}}
-                  onClick={() => {
-                    this.setState({
-                      dayOffset: 0
-                    });
-                  }}
-              >Latest</button>
-
-              <button
-                  className={"btn btn-sm btn-success play"}
-                  style={{height: "30px", lineHeight: "20px"}}
-                  onClick={() => {
-                    document.getElementsByClassName("todayTime")[0].style.display = "none";
-                    document.getElementsByClassName("play")[0].style.display = "none";
-                    document.getElementsByClassName("leftTime")[0].style.display = "none";
-                    document.getElementsByClassName("midTime")[0].style.display = "none";
-
-                    var now = new Date();
-                    var startDate = new Date("January 22, 2020 00:00:00");
-                    const oneDay = 24 * 60 * 60 * 1000;
-                    this.setState({
-                      dayOffset:  -Math.round(Math.abs((now - startDate) / oneDay)),
-                      testmode: false,
-                      testscale: 0,
-                      playmode: true,
-                      playpause: false
-                    });
-                    let interval = setInterval(() => {
-                      if (!that.state.playmode) {
-                        clearInterval(interval);
-                        this.setState({
-                            dayOffset: 0
-                        });
-                        return;
-                      }
-                      if (!this.state.playpause) {
-                        this.setState({
-                            dayOffset: this.state.dayOffset + 1
-                        });
-                        if (this.state.dayOffset === 0) {
-                          document.getElementsByClassName("todayTime")[0].style.display = "inline";
-                          document.getElementsByClassName("play")[0].style.display = "inline";
-                          document.getElementsByClassName("leftTime")[0].style.display = "inline";
-                          document.getElementsByClassName("midTime")[0].style.display = "none";
-                          this.setState({
-                             playmode: false,
-                             testscale: 0,
-                             testmode: false
-                          });
-                        }
-                      }
-                    }, 500);
-                  }}
-              ><FontAwesomeIcon icon={faPlayCircle}/></button>
-
-              <button
-                  className={"btn btn-sm pause " + (this.state.playpause ? "btn-success" : "btn-outline-dark")}
-                  style={this.state.playmode ? {height: "30px", lineHeight: "20px"} : {display: "none"}}
-                  onClick={() => {
-                      this.setState({
-                          playpause: !this.state.playpause
-                      });
-                  }}
-              >
-                {
-                  !this.state.playpause &&
-                  [<FontAwesomeIcon icon={faPauseCircle}/>, " Pause"]
-                }
-                {
-                  this.state.playpause &&
-                  [<FontAwesomeIcon icon={faPlayCircle}/>, " Continue"]
-                }
-              </button>
-
-              <button
-                  className={"btn btn-sm btn-danger stop"}
-                  style={this.state.playmode ? {height: "30px", lineHeight: "20px"} : {display: "none"}}
-                  onClick={() => {
-                    document.getElementsByClassName("todayTime")[0].style.display = "inline";
-                    document.getElementsByClassName("play")[0].style.display = "inline";
-                    document.getElementsByClassName("leftTime")[0].style.display = "inline";
-                    document.getElementsByClassName("midTime")[0].style.display = "none";
-                    this.state.playmode = false;
-                    this.state.testscale = 0;
-                    this.render();
-                  }}
-              ><FontAwesomeIcon icon={faStopCircle}/> Stop
-              </button>
-            </div>
-            {
-              that.state.momentum !== "none" &&
-              <style dangerouslySetInnerHTML={{
-                __html: `
-                  .hideInMomentum {
-                    display: none !important;
-                  }
-                  .showInMomentum {
-                    display: block !important;
-                  }`
-              }}/>
-            }
             {that.leafletMap(ds)}
             {that.leaderboard(ds)}
+            {that.localStats(ds)}
           </>
       );
     }
   }
 
   leaderboard = (ds) => {
+    let firstEight = [];
     return (
       <div className="leaderboard">
-        <table>
-          <thead>
-            <tr>
-              <td className={"p-1 valign-top text-muted"}></td>
-              <td className={"p-1 bg-danger text-light sortHeader"} align={"center"}>
-                <LightTooltip
-                  title={
-                    <div style={{textAlign: "justify"}}>
-                      Sort by <b>active cases</b>
-                    </div>
-                  }
-                  small={"true"}
-                  disableTouchListener={true}
-                >
-                  <a
-                    onClick={() => {
-                      this.setState({
-                        leadership: "active"
-                      });
-                    }}><FontAwesomeIcon icon={faProcedures} size={"lg"}/>
-                  </a>
-                </LightTooltip>
-              </td>
-              <td className={"p-1 sortHeader"}>
-                <LightTooltip
-                  title={
-                    <div style={{textAlign: "justify"}}>
-                      Sort by <b>location</b>
-                    </div>
-                  }
-                  small={"true"}
-                  disableTouchListener={true}
-                >
-                  <a
-                    onClick={() => {
-                      this.setState({
-                        leadership: "name"
-                      });
-                    }}
-                  >Location</a>
-                </LightTooltip>
-              </td>
-              <td className={"p-1 sortHeader"} align={"center"}>
-              <LightTooltip
-                title={
-                  <div style={{textAlign: "justify"}}>
-                    <b>Containment Score</b> reflects the spread of COVID19
-                    in this region, based on weighted average growth
-                    of confirmed cases over the past 1, 3 and 7 days. From worst (0/10) to best (10/10).
-                  </div>
-                }
-                small={"true"}
-                disableTouchListener={true}
-              >
-                <a
-                  onClick={() => {
-                    this.setState({
-                      leadership: "containmentScore"
-                    });
-                  }}
-                >
-                  <FontAwesomeIcon icon={faShieldAlt} size={"lg"}/>
-                </a>
-              </LightTooltip>
-              </td>
-              <td className={"p-1 text-danger sortHeader"} align={"center"}>
-                <LightTooltip
-                  title={
-                    <div style={{textAlign: "justify"}}>
-                      Sort by <b>confirmed cases</b>
-                    </div>
-                  }
-                  small={"true"}
-                  disableTouchListener={true}
-                >
-                  <a
-                    onClick={() => {
-                      this.setState({
-                        leadership: "confirmed"
-                      });
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faBiohazard} size={"lg"}/>
-                  </a>
-                </LightTooltip>
-              </td>
-              <td className={"p-1 text-success sortHeader"} align={"center"}>
-                <LightTooltip
-                  title={
-                    <div style={{textAlign: "justify"}}>
-                      Sort by <b>recovered cases</b>
-                    </div>
-                  }
-                  small={"true"}
-                  disableTouchListener={true}
-                >
-                  <a
-                    onClick={() => {
-                      this.setState({
-                        leadership: "recovered"
-                      });
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faHeartbeat} size={"lg"}/>
-                  </a>
-                </LightTooltip>
-              </td>
-              <td className={"p-1 text-dark sortHeader"} align={"center"}>
-                <LightTooltip
-                  title={
-                    <div style={{textAlign: "justify"}}>
-                      Sort by <b>deceased cases</b>
-                    </div>
-                  }
-                  small={"true"}
-                  disableTouchListener={true}
-                >
-                  <a
-                    onClick={() => {
-                      this.setState({
-                        leadership: "deceased"
-                      });
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faHeartBroken} size={"lg"}/>
-                  </a>
-                </LightTooltip>
-              </td>
-            </tr>
-          </thead>
-          <tbody>
-            {
+        <div className="slideshowWrapper">
+          <div className="slideshowContainer">
+          {
               Object.keys(ds.data).sort((a, b) => {
-                let mode = this.state.ppmmode ? "ppm" : "absolute";
+                let mode = "absolute";
                 let ca = a;
                 let cb = b;
-                if (this.state.leadership==="name") {
-                  let c = a;
-                  ca = b;
-                  cb = c;
-		        }
-                else if (this.state.leadership==="containmentScore") {
-                  ca = ds.data[a].containmentScore;
-                  cb = ds.data[b].containmentScore;
-		        } else {
-                  ca = ds.data[a][mode].current[this.state.leadership];
-                  ca = (Population.ABSOLUTE[a]<ONE_M || isNaN(ca)) ? 0 : ca;
-                  cb = ds.data[b][mode].current[this.state.leadership];
-                  cb = (Population.ABSOLUTE[b]<ONE_M || isNaN(cb))  ? 0 : cb;
-                }
+                ca = ds.data[a][mode].current[this.state.leadership];
+                ca = isNaN(ca) ? 0 : ca;
+                cb = ds.data[b][mode].current[this.state.leadership];
+                cb = isNaN(cb) ? 0 : cb;
                 if(ca === null && cb === null) {
                   return 0;
                 } else if(ca === null) {
@@ -634,57 +163,137 @@ class MapChart extends Map {
                   return (ca >= cb) ? -1 : 1;
                 }
               }).map((name, locationIndex) => {
-                if(name !== "Canada") {
-                  let confirmed = (this.state.ppmmode) ? ds.data[name].ppm.current.confirmed : ds.data[name].absolute.current.confirmed;
-                  let active = (this.state.ppmmode) ? ds.data[name].ppm.current.active : ds.data[name].absolute.current.active;
-                  active = isNaN(active) ? "N/A" : active;
-                  let recovered = (this.state.ppmmode) ? ds.data[name].ppm.current.recovered : ds.data[name].absolute.current.recovered;
-                  let deceased = (this.state.ppmmode) ? ds.data[name].ppm.current.deceased : ds.data[name].absolute.current.deceased;
-                  let containmentScore = ds.data[name].containmentScore;
-                  if(containmentScore === null) {
-                    containmentScore = "N/A";
-                  }
-                  return (
-                    <tr
-                        className="locationSelect"
-                        onClick={() =>{
-                            this.state.selectedLocations.pop();
-                            this.state.selectedLocations.push(name);
-                            this.setState({
-                                lng: this.state.datasource.locations[name][0],
-                                lat: this.state.datasource.locations[name][1],
-                                zoom: 5 + Math.random() / 10
-                            })
-                        }}
-                    >
-                      <td className={"p-1 valign-top text-muted mono"} align={"center"}>{locationIndex + 1}</td>
-                      <td className={"p-1 valign-top stat bg-danger text-light"} align={"right"}>{Utils.rounded(active)}</td>
-                      <td className={"p-1 valign-top country"}>{name}</td>
-                      <td className={"p-1 valign-top"}>
-                        <div className={"containmentScore containmentScore" + containmentScore}>
-                          {containmentScore}{containmentScore !== "N/A" ? "/10" : ""}
+                let confirmed = ds.data[name].absolute.current.confirmed;
+                let active = ds.data[name].absolute.current.active;
+                active = isNaN(active) ? "N/A" : active;
+                let recovered = ds.data[name].absolute.current.recovered;
+                let deceased = ds.data[name].absolute.current.deceased;
+                let returningDiv = (
+                  <div
+                    className="locationSelect"
+                    onClick={() =>{
+                        this.state.selectedLocations.pop();
+                        this.state.selectedLocations.push(name);
+                        this.setState({
+                            lng: this.state.datasource.locations[name][0],
+                            lat: this.state.datasource.locations[name][1],
+                            zoom: 5 + Math.random() / 10
+                        })
+                    }}
+                  >
+                    <div className={"p-1 text-muted mono statIndex"} align={"center"}>
+                      {locationIndex + 1}
+                    </div>
+                    <div>
+                      <div className="statLine">
+                        <div
+                          className={"p-1 country"}
+                          style={name.length > 20
+                            ? { fontSize: '0.8rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }
+                            : {}
+                          }
+                        >
+                          {name}
                         </div>
-                      </td>
-                      <td className={"p-1 valign-top stat text-danger"} align={"right"}>{Utils.rounded(confirmed)}</td>
-                      <td className={"p-1 valign-top stat text-success"} align={"right"}>{Utils.rounded(recovered)}</td>
-                      <td className={"p-1 valign-top stat text-dark"} align={"right"}>{Utils.rounded(deceased)}</td>
-                    </tr>
-                  )
+                        <div className={"p-1 stat bg-danger text-light"} align={"right"}>  
+                          <FontAwesomeIcon icon={faProcedures} className={"mr-1"} />
+                          {active}
+                        </div>
+                      </div>
+                      <div className="statLine">
+                        <div className={"p-1 stat text-warning"} align={"right"}>
+                          <FontAwesomeIcon icon={faThermometerThreeQuarters} className={"mr-1"} />
+                          {confirmed}
+                        </div>
+                        <div className={"p-1 stat text-success"} align={"right"}>
+                          <FontAwesomeIcon icon={faHeartbeat} className={"mr-1"} />
+                          {recovered}
+                        </div>
+                        <div className={"p-1 stat text-dark"} align={"right"}>
+                          <FontAwesomeIcon icon={faHeartBroken} className={"mr-1"} />
+                          {deceased}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+                if (locationIndex < 8) {
+                  firstEight.push(returningDiv);
+                  return returningDiv;
+                } else if (locationIndex === Object.keys(ds.data).length - 1) {
+                  return [
+                    returningDiv,
+                    ...firstEight,
+                  ];
                 }
+                return returningDiv;
               })
             }
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
     );
   };
+
+  localStats = (ds) => {
+    return (
+    <div className="localStats">
+      <span className="localStats-title">
+        <img src="tr-flag.png" alt="Turkey" height="120px"/>
+        Türkiye Verileri
+      </span>
+      <Container>
+        <div className={"bg-warning text-white mr-2 localBox"}>
+          <FontAwesomeIcon icon={faThermometerThreeQuarters} className={"mr-1"} size="4x" />
+          <div>
+            Toplam Hasta
+            <br />
+            <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
+              {Utils.rounded(ds.data['Turkey'].absolute.current.confirmed)}
+            </span>
+          </div>
+        </div>
+        <div className={"bg-danger text-white mr-2 localBox"}>
+          <FontAwesomeIcon icon={faProcedures} className={"mr-1"} size="2x" />
+          <div>
+            Aktif Hasta
+            <br />
+            <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
+              {Utils.rounded(ds.data['Turkey'].absolute.current.active)}
+            </span>
+          </div>
+        </div>
+        <div className={"bg-success text-white mr-2 localBox"}>
+          <FontAwesomeIcon icon={faHeartbeat} className={"mr-1"} size="3x" />
+          <div>
+            Toplam İyileşen
+            <br />
+            <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
+              {Utils.rounded(ds.data['Turkey'].absolute.current.recovered)}
+            </span>
+          </div>
+        </div>
+        <div className={"bg-dark text-white mr-2 localBox"}>
+          <FontAwesomeIcon icon={faHeartBroken} className={"mr-1"} size="3x" />
+          <div>
+            Toplam Ölümler
+            <br />
+            <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
+              {Utils.rounded(ds.data['Turkey'].absolute.current.deceased)}
+            </span>
+          </div>
+        </div>
+      </Container>
+    </div>
+    );
+  }
 
   leafletMap = (ds) => {
     const position = [this.state.lat, this.state.lng];
     return (
       <Map ref={(ref) => { this.map = ref}} center={position} zoom={this.state.zoom} zoomControl={false}>
         <TileLayer
-          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors | Served by ERSTREAM &reg;'
             url={this.state.mapstyle}
         />
 
@@ -730,6 +339,8 @@ class MapChart extends Map {
           case "last7":
             size = ds.data[name].absolute.growthLast7Days.active / this.state.datasource.maxValue;
             break;
+          default:
+            break;
         }
         let pos = size >= 0;
         size = Math.abs(size);
@@ -737,7 +348,7 @@ class MapChart extends Map {
         size = this.scalePpm(size, pop);
         size = this.scaleLogAndPpm(size);
         let coordinates = this.state.datasource.locations[name];
-        if (size > 0 && name !== "US, US" && name !== "Canada") {
+        if (size > 0) {
           return (
               <CircleMarker
                   key={"change_" + locationIndex}
@@ -824,7 +435,7 @@ class MapChart extends Map {
   };
 
   marker = (index, coordinates, color, size, data, name, type, opacity) => {
-    if(size > 0 && name !== "US, US" && name !== "Canada") {
+    if(size > 0) {
       return (
         // bubble
         <CircleMarker
@@ -868,8 +479,8 @@ class MapChart extends Map {
               <b>{name}</b><br />
               <FontAwesomeIcon icon={faUsers}/> {Utils.rounded(Population.ABSOLUTE[name])}
               &nbsp;&middot;&nbsp;
-              <span className={"text-danger"}>
-                <FontAwesomeIcon icon={faBiohazard}/>&nbsp;
+              <span className={"text-warning"}>
+                <FontAwesomeIcon icon={faThermometerThreeQuarters}/>&nbsp;
                 {<span>{Utils.rounded(data[mode].current.confirmed)} {unit}</span>}
               </span>
               &nbsp;&middot;&nbsp;
@@ -888,7 +499,7 @@ class MapChart extends Map {
               data[mode].current.confirmedProjected > data[mode].current.confirmed && this.state.testmode && this.state.testscale > 0 &&
               [
                 <Badge className={"text-primary"}>
-                  <FontAwesomeIcon icon={faBiohazard}/>&nbsp;
+                  <FontAwesomeIcon icon={faThermometerThreeQuarters}/>&nbsp;
                   &gt;{<span>{Utils.rounded(data[mode].current.confirmedProjected * this.state.testscale)} {unit} projected at {this.state.testscale}x global avg. testing rate</span>}
                 </Badge>,
                 <br />
@@ -992,7 +603,7 @@ class MapChart extends Map {
                         <b>{name}</b> &nbsp;
                         <span><FontAwesomeIcon icon={faUsers}/> {rounded(Population.ABSOLUTE[name])}</span><br/>
                         <span><FontAwesomeIcon
-                            icon={faBiohazard}/> {rounded(that.confirmed[rowId].val)} confirmed (>{rounded(that.projected[rowId].val)} at avg. test rate)</span><br/>
+                            icon={faThermometerThreeQuarters}/> {rounded(that.confirmed[rowId].val)} confirmed (>{rounded(that.projected[rowId].val)} at avg. test rate)</span><br/>
                         <span><FontAwesomeIcon icon={faProcedures}/> {rounded(active)} active</span>
                         &nbsp;<span><FontAwesomeIcon
                           icon={faHeartbeat}/> {rounded(that.recovered[rowId].val)} recovered</span>
@@ -1025,7 +636,7 @@ class MapChart extends Map {
                         <b>{name}</b> &nbsp;
                         <span><FontAwesomeIcon icon={faUsers}/> {rounded(Population.ABSOLUTE[name])}</span><br/>
                         <span><FontAwesomeIcon
-                            icon={faBiohazard}/> {rounded(that.confirmed[rowId].val)} confirmed (>{rounded(that.projected[rowId].val)} at avg. test rate)</span><br/>
+                            icon={faThermometerThreeQuarters}/> {rounded(that.confirmed[rowId].val)} confirmed (>{rounded(that.projected[rowId].val)} at avg. test rate)</span><br/>
                         <span><FontAwesomeIcon icon={faProcedures}/> {rounded(active)} active</span>
                         &nbsp;<span><FontAwesomeIcon
                           icon={faHeartbeat}/> {rounded(that.recovered[rowId].val)} recovered</span>
@@ -1055,7 +666,7 @@ class MapChart extends Map {
                         <b>{name}</b> &nbsp;
                         <span><FontAwesomeIcon icon={faUsers}/> {rounded(Population.ABSOLUTE[name])}</span><br/>
                         <span><FontAwesomeIcon
-                            icon={faBiohazard}/> {rounded(that.confirmed[rowId].val)} confirmed (>{rounded(that.projected[rowId].val)} at avg. test rate)</span><br/>
+                            icon={faThermometerThreeQuarters}/> {rounded(that.confirmed[rowId].val)} confirmed (>{rounded(that.projected[rowId].val)} at avg. test rate)</span><br/>
                         <span><FontAwesomeIcon icon={faProcedures}/> {rounded(active)} active</span>
                         &nbsp;<span><FontAwesomeIcon
                           icon={faHeartbeat}/> {rounded(that.recovered[rowId].val)} recovered</span>
