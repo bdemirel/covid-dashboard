@@ -139,7 +139,7 @@ class MapChart extends Map {
   }
 
   leaderboard = (ds) => {
-    let firstEight = [];
+    let firstThree = [];
     return (
       <div className="leaderboard">
         <div className="slideshowWrapper">
@@ -188,8 +188,8 @@ class MapChart extends Map {
                       <div className="statLine">
                         <div
                           className={"p-1 country"}
-                          style={name.length > 20
-                            ? { fontSize: '0.8rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }
+                          style={name.length > 13
+                            ? { fontSize: '1.5rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }
                             : {}
                           }
                         >
@@ -217,13 +217,13 @@ class MapChart extends Map {
                     </div>
                   </div>
                 );
-                if (locationIndex < 8) {
-                  firstEight.push(returningDiv);
+                if (locationIndex < 3) {
+                  firstThree.push(returningDiv);
                   return returningDiv;
                 } else if (locationIndex === Object.keys(ds.data).length - 1) {
                   return [
                     returningDiv,
-                    ...firstEight,
+                    ...firstThree,
                   ];
                 }
                 return returningDiv;
@@ -249,7 +249,7 @@ class MapChart extends Map {
             Toplam Hasta
             <br />
             <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
-              {Utils.rounded(ds.data['Turkey'].absolute.current.confirmed)}
+              {ds.data['Turkey'].absolute.current.confirmed}
             </span>
           </div>
         </div>
@@ -259,7 +259,7 @@ class MapChart extends Map {
             Aktif Hasta
             <br />
             <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
-              {Utils.rounded(ds.data['Turkey'].absolute.current.active)}
+              {ds.data['Turkey'].absolute.current.active}
             </span>
           </div>
         </div>
@@ -269,7 +269,7 @@ class MapChart extends Map {
             Toplam İyileşen
             <br />
             <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
-              {Utils.rounded(ds.data['Turkey'].absolute.current.recovered)}
+              {ds.data['Turkey'].absolute.current.recovered}
             </span>
           </div>
         </div>
@@ -279,7 +279,7 @@ class MapChart extends Map {
             Toplam Ölümler
             <br />
             <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
-              {Utils.rounded(ds.data['Turkey'].absolute.current.deceased)}
+              {ds.data['Turkey'].absolute.current.deceased}
             </span>
           </div>
         </div>

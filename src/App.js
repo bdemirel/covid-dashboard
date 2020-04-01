@@ -83,39 +83,39 @@ function App() {
             <span className={"mapio"}><b>MAP</b><span className="text-secondary">.IO</span></span> */}
         </Navbar.Brand>
         <Container>
-          <div className={"font-weight-bold text-primary mr-2"}>
+          <div className={"font-weight-bold text-primary mr-5"} style={{ fontSize: '1.5rem' }}>
             <FontAwesomeIcon icon={faGlobeEurope} className={"mr-1"}/>
             Dünya
           </div>
-          <div className={"small text-warning mr-2"}>
+          <div className={"text-warning mr-5"}>
             <FontAwesomeIcon icon={faThermometerThreeQuarters} className={"mr-1"}/>
             Toplam Hasta
             <br />
-            <span className="font-weight-bolder" style={{ fontSize: '1rem', letterSpacing: '2px' }}>
+            <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
               {Utils.rounded(totalConfirmed)}
             </span>
           </div>
-          <div className={"small text-danger mr-2"}>
+          <div className={"text-danger mr-5"}>
             <FontAwesomeIcon icon={faProcedures} className={"mr-1"}/>
             Aktif Hasta
             <br />
-            <span className="font-weight-bolder" style={{ fontSize: '1rem', letterSpacing: '2px' }}>
+            <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
               {Utils.rounded(activeConfirmed)}
             </span>
           </div>
-          <div className={"small text-success mr-2"}>
+          <div className={"text-success mr-5"}>
             <FontAwesomeIcon icon={faHeartbeat} className={"mr-1"} />
             Toplam İyileşen
             <br />
-            <span className="font-weight-bolder" style={{ fontSize: '1rem', letterSpacing: '2px' }}>
+            <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
               {Utils.rounded(totalRecovered)}
             </span>
           </div>
-          <div className={"small mr-2"}>
+          <div className={"mr-5"}>
             <FontAwesomeIcon icon={faHeartBroken} className={"mr-1"} />
             Toplam Ölümler
             <br />
-            <span className="font-weight-bolder" style={{ fontSize: '1rem', letterSpacing: '2px' }}>
+            <span className="font-weight-bolder" style={{ fontSize: '1.5rem', letterSpacing: '2px' }}>
               {Utils.rounded(totalDeceased)}
             </span>
           </div>
