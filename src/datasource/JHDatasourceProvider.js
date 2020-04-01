@@ -21,7 +21,7 @@ export class JHDatasourceProvider extends DatasourceProvider {
     // this.liveUSStatesUrl = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/web-data/data/cases_state.csv";
   }
 
-  getDatasource = (loadUScounties, callback) => {
+  getDatasource = (callback) => {
     let ds = new Datasource();
     // load confirmed data
     this.loadFromUrl(this.historyConfirmedUrl, (rawConfirmed) => {

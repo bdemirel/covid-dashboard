@@ -16,7 +16,7 @@ function App() {
   const [totalConfirmed, setTotalConfirmed] = useState(0);
   const [totalRecovered, setTotalRecovered] = useState(0);
   const [totalDeceased, setTotalDeceased] = useState(0);
-  const [totalConfirmedactiveConfirmed, setTotalConfirmedProjected] = useState(0);
+  const [totalProjected, setTotalConfirmedProjected] = useState(0);
   // 0 => USD, 1 => EUR, 2 => Date, 3 => Time
   const [activeInfoField, setActiveInfoField] = useState(0);
   const [InfoFieldUSD, setInfoFieldUSD] = useState(0);
@@ -24,17 +24,10 @@ function App() {
   // const [InfoFieldBIST, setInfoFieldBIST] = useState(0);
   const [InfoFieldsDateTime, setInfoFieldsDateTime] = useState(0);
 
-  useEffect(() => {
+  const fetchCurrencyInfo = () => {
     fetch('https://api.exchangeratesapi.io/latest?base=TRY')
       .then((response) => {
         if (response.ok) {
-          // const xmlParser = new DOMParser();
-          // let xmlString = xmlParser.parseFromString(response.text(), 'text/xml');
-          // xmlString.querySelectorAll('Currency').forEach(node => {
-          //   if (["EUR", "USD", "BPS"].includes(node.querySelector('Banknote').textContent)) {
-          //     console.info(node.querySelector('BanknoteBuying'));
-          //   }
-          // })
           response.json().then((body) => {
             if (body.rates) {
               setInfoFieldEUR(body.rates.EUR);
@@ -46,6 +39,11 @@ function App() {
         }
       })
       .catch((error) => console.log(error));
+  }
+
+  useEffect(() => {
+      fetchCurrencyInfo();
+      setInterval(() => fetchCurrencyInfo(), 30000);
   
       setInfoFieldsDateTime(new Date())
       setInterval(() => setInfoFieldsDateTime(new Date()), 15000);

@@ -73,11 +73,13 @@ class MapChart extends Map {
 
     this.map = null;
 
-    let that = this;
-    new JHDatasourceProvider().getDatasource(false,  (datasource) => {
-      that.state.datasource = datasource;
-      that.setState({});
+    new JHDatasourceProvider().getDatasource((datasource) => {
+      this.setState({ datasource });
     });
+
+    setInterval(() => new JHDatasourceProvider().getDatasource((datasource) => {
+      this.setState({ datasource });
+    }), 3600000);
   }
 
   componentDidMount = () => {
@@ -188,7 +190,7 @@ class MapChart extends Map {
                       <div className="statLine">
                         <div
                           className={"p-1 country"}
-                          style={name.length > 13
+                          style={name.length > 12
                             ? { fontSize: '1.5rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }
                             : {}
                           }
