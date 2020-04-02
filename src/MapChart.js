@@ -79,7 +79,7 @@ class MapChart extends Map {
 
     setInterval(() => new JHDatasourceProvider().getDatasource((datasource) => {
       this.setState({ datasource });
-    }), 3600000);
+    }), 900000);
   }
 
   componentDidMount = () => {
